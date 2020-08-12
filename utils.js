@@ -216,7 +216,7 @@ let verifyAuthenticatorAttestationResponse = (webAuthnResponse) => {
   let ctapMakeCredResp = cbor.decodeAllSync(attestationBuffer)[0]
 
   let response = { verified: false }
-  if (ctapMakeCredResp.fmt === "fido-u2f") {
+  if (ctapMakeCredResp.fmt === "fido-u2f" || ctapMakeCredResp.fmt === "apple") {
     let authrDataStruct = parseMakeCredAuthData(ctapMakeCredResp.authData)
 
     if (!(authrDataStruct.flags & U2F_USER_PRESENTED))
@@ -299,7 +299,7 @@ let verifyAuthenticatorAssertionResponse = (
   )
 
   let response = { verified: false }
-  if (authr.fmt === "fido-u2f") {
+  if (authr.fmt === "fido-u2f" || authr.fmt === "apple") {
     let authrDataStruct = parseGetAssertAuthData(authenticatorData)
 
     if (!(authrDataStruct.flags & U2F_USER_PRESENTED))

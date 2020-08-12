@@ -156,7 +156,6 @@ router.post("/response", (request, response) => {
 
 router.post("register/v2", (req, res) => {
   const { username, name, authenticateData } = req.body
-  database[username] = authenticateData
 })
 
 router.post("login/v2", (req, res) => {})
@@ -167,6 +166,12 @@ router.post("/verify/v2", (request, response) => {
     base64url.decode(webauthnResp.response.clientDataJSON)
   )
   console.log(webauthnResp)
+
+  if (!database[username]) {
+    database[username] = {
+      authenticators: [],
+    }
+  }
 
   /* Check challenge... */
   // if (clientData.challenge !== request.session.challenge) {
