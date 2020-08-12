@@ -173,6 +173,8 @@ router.post("/register/v2", (req, res) => {
 router.post("/login/v2", (req, res) => {
   const { username, publicKeyCredential } = req.body
   const authrInfo = database[username].authrInfo
+  console.log(database[username])
+  console.log(authrInfo)
 
   const attestation = parseAttestationObject(
     base64url.toBuffer(authrInfo.response.attestationObject)
