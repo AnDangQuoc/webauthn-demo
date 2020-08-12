@@ -4,6 +4,7 @@ const config = require("../config.json")
 const base64url = require("base64url")
 const router = express.Router()
 const database = require("./db")
+const { request } = require("express")
 
 router.post("/register", (request, response) => {
   if (!request.body || !request.body.username || !request.body.name) {
@@ -96,7 +97,7 @@ router.post("/response", (request, response) => {
 
     return
   }
-  console.warn("AAAAAAA", request.body)
+  // console.warn("AAAAAAA", request.body)
 
   let webauthnResp = request.body
   let clientData = JSON.parse(
@@ -141,6 +142,68 @@ router.post("/response", (request, response) => {
     })
   }
   console.warn("BBBBBB", result)
+
+  if (result.verified) {
+    request.session.loggedIn = true
+    response.json({ status: "ok" })
+  } else {
+    response.json({
+      status: "failed",
+      message: "Can not authenticate signature!",
+    })
+  }
+})
+
+router.post("register/v2", (req, res) => {
+  const { username, name, authenticateData } = req.body
+  database[username] = authenticateData
+})
+
+router.post("login/v2", (req, res) => {})
+
+router.post("/verify/v2", (req, res) => {
+  let { username, webauthnResp } = request.body
+  let clientData = JSON.parse(
+    base64url.decode(webauthnResp.response.clientDataJSON)
+  )
+
+  /* Check challenge... */
+  // if (clientData.challenge !== request.session.challenge) {
+  //   response.json({
+  //     status: "failed",
+  //     message: "Challenges don't match!",
+  //   })
+  // }
+
+  /* ...and origin */
+  if (clientData.origin !== config.origin) {
+    response.json({
+      status: "failed",
+      message: "Origins don't match!",
+    })
+  }
+
+  let result
+  if (webauthnResp.response.attestationObject !== undefined) {
+    /* This is create cred */
+    result = utils.verifyAuthenticatorAttestationResponse(webauthnResp)
+
+    if (result.verified) {
+      database[username].authenticators.push(result.authrInfo)
+      database[username].registered = true
+    }
+  } else if (webauthnResp.response.authenticatorData !== undefined) {
+    /* This is get assertion */
+    result = utils.verifyAuthenticatorAssertionResponse(
+      webauthnResp,
+      database[username].authenticators
+    )
+  } else {
+    response.json({
+      status: "failed",
+      message: "Can not determine type of response!",
+    })
+  }
 
   if (result.verified) {
     request.session.loggedIn = true
