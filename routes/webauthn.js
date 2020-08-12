@@ -183,7 +183,7 @@ router.post("/login/v2", (req, res) => {
 
   const data = Buffer.concat([
     base64url.toBuffer(publicKeyCredential.response.authenticatorData),
-    hash(base64url.toBuffer(publicKeyCredential.response.clientDataJSON)),
+    utils.hash(base64url.toBuffer(publicKeyCredential.response.clientDataJSON)),
   ])
 
   const result = crypto
