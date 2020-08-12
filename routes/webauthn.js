@@ -157,16 +157,16 @@ router.post("/response", (request, response) => {
 router.post("/register/v2", (req, res) => {
   const { username, name, publicKeyCredential } = req.body
   database[username] = {
-    username:
-    authrInfo: authenticateData
+    username: username,
+    authrInfo: authenticateData,
   }
-  res.json({status:'ok'})
+  res.json({ status: "ok" })
 })
 
 router.post("/login/v2", (req, res) => {
-  const {username, publicKeyCredential}  =req.body
+  const { username, publicKeyCredential } = req.body
   const authrInfo = database[username]
-  res.json({status:'ok'})
+  res.json({ status: "ok" })
 })
 
 router.post("/verify/v2", (request, response) => {
