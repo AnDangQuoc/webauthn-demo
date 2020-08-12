@@ -166,6 +166,7 @@ router.post("/verify/v2", (request, response) => {
   let clientData = JSON.parse(
     base64url.decode(webauthnResp.response.clientDataJSON)
   )
+  console.log(webauthnResp)
 
   /* Check challenge... */
   // if (clientData.challenge !== request.session.challenge) {
@@ -204,6 +205,7 @@ router.post("/verify/v2", (request, response) => {
       message: "Can not determine type of response!",
     })
   }
+  console.log(result)
 
   if (result.verified) {
     request.session.loggedIn = true
