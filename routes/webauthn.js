@@ -161,7 +161,7 @@ router.post("register/v2", (req, res) => {
 
 router.post("login/v2", (req, res) => {})
 
-router.post("/verify/v2", (req, res) => {
+router.post("/verify/v2", (request, response) => {
   let { username, webauthnResp } = request.body
   let clientData = JSON.parse(
     base64url.decode(webauthnResp.response.clientDataJSON)
