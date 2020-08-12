@@ -1,4 +1,4 @@
 {
   "port": 5000,
-  "origin": "http://localhost:1337"
+  "origin": "https://webauthnplay.herokuapp.com"
 }
