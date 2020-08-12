@@ -4,8 +4,11 @@ const config = require("../config.json")
 const base64url = require("base64url")
 const router = express.Router()
 const database = require("./db")
-const { request } = require("express")
-
+const {
+  parseAttestationObject,
+  parseAuthenticatorData,
+} = require("./parser/output-parser")
+const crypto = require("crypto")
 router.post("/register", (request, response) => {
   if (!request.body || !request.body.username || !request.body.name) {
     response.json({
@@ -154,11 +157,15 @@ router.post("/response", (request, response) => {
   }
 })
 
+router.get("/db", (req, res) => {
+  res.json(database)
+})
+
 router.post("/register/v2", (req, res) => {
   const { username, name, publicKeyCredential } = req.body
   database[username] = {
     username: username,
-    authrInfo: authenticateData,
+    authrInfo: publicKeyCredential,
   }
   res.json({ status: "ok" })
 })
@@ -166,7 +173,28 @@ router.post("/register/v2", (req, res) => {
 router.post("/login/v2", (req, res) => {
   const { username, publicKeyCredential } = req.body
   const authrInfo = database[username]
-  res.json({ status: "ok" })
+
+  const attestation = parseAttestationObject(
+    authrInfo.response.attestationObject
+  )
+  const authenticator = parseAuthenticatorData(
+    publicKeyCredential.response.authenticatorData
+  )
+
+  const data = Buffer.concat([
+    publicKeyCredential.response.authenticatorData,
+    hash(publicKeyCredential.response.clientDataJSON),
+  ])
+
+  const result = crypto
+    .createVerify("SHA256")
+    .update(data)
+    .verify(
+      attestation.authData.attestedCredentialData.credentialPublicKey,
+      publicKeyCredential.response.signature
+    )
+
+  res.json({ status: "ok", result })
 })
 
 router.post("/verify/v2", (request, response) => {

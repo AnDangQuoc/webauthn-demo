@@ -337,4 +337,5 @@ module.exports = {
   generateServerGetAssertion,
   verifyAuthenticatorAttestationResponse,
   verifyAuthenticatorAssertionResponse,
+  hash,
 }
