@@ -39,7 +39,7 @@ router.post("/register", (request, response) => {
     name,
     database[username].id
   )
-  // challengeMakeCred.status = 'ok'
+  challengeMakeCred.status = "ok"
 
   request.session.challenge = challengeMakeCred.challenge
   request.session.username = username
