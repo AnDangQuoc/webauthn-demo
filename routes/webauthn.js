@@ -96,6 +96,7 @@ router.post("/response", (request, response) => {
 
     return
   }
+  console.warn("AAAAAAA", request.body)
 
   let webauthnResp = request.body
   let clientData = JSON.parse(
@@ -139,6 +140,7 @@ router.post("/response", (request, response) => {
       message: "Can not determine type of response!",
     })
   }
+  console.warn("BBBBBB", result)
 
   if (result.verified) {
     request.session.loggedIn = true
