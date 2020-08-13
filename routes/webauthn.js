@@ -201,14 +201,7 @@ router.post("/login/v2", (req, res) => {
     bufferedSignature,
     attestationObject.authData.pemFormattedPublicKey
   )
-  console.log("AAAAAAA", result)
 
-  const resultUsingBuffer = verify(
-    signedData,
-    bufferedSignature,
-    attestationObject.authData.credentialPublicKey
-  )
-  console.log("BBBBBBB", resultUsingBuffer)
   res.json({ status: "ok", result })
 })
 
