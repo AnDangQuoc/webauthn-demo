@@ -174,6 +174,9 @@ router.post("/login/v2", (req, res) => {
   const { username, publicKeyCredential } = req.body
   const authenticateInfo = database[username].authenticateInfo
 
+  if (!authenticateInfo) {
+    return res.json({ status: "error", message: "user not logged in" })
+  }
   // Parse Attestation Object
   const bufferedAttestation = base64url.toBuffer(
     authenticateInfo.response.attestationObject
