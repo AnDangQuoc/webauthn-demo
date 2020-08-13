@@ -5,6 +5,7 @@ const base64url = require("base64url")
 const router = express.Router()
 const database = require("./db")
 const crypto = require("crypto")
+const { v4: uuidv4 } = require("uuid")
 
 const { parseAttestationObj } = require("../parser")
 const { hash, verify } = require("../utilsV2")
@@ -172,23 +173,19 @@ router.post("/register/v2", (req, res) => {
 
 router.post("/register/v2/init", (req, res) => {
   const { username } = req.body
-  const challenge = new Uint8Array(32)
-  const userId = new Uint8Array(32)
-  crypto.getRandomValues(challenge)
-  crypto.getRandomValues(userId)
+  const challenge = uuidv4()
+  const userId = uuidv4()
 
-  const encodedUserId = base64url.encode(userId)
-  const encodedChallenge = base64url.encode(challenge)
   database[username] = {
     username: username,
-    userId: encodedUserId,
-    challenge: encodedChallenge,
+    userId: userId,
+    challenge: challenge,
   }
 
   return res.json({
     status: "ok",
-    userId: encodedUserId,
-    challenge: encodedChallenge,
+    userId: userId,
+    challenge: challenge,
   })
 })
 
