@@ -164,14 +164,25 @@ router.get("/db", (req, res) => {
 
 router.post("/register/v2", (req, res) => {
   const { username, name, publicKeyCredential } = req.body
+  if (!database[username]) {
+    database[username] = { username, name }
+  }
   database[username].authenticateInfo = publicKeyCredential
   res.json({ status: "ok" })
 })
 
-router.post("/register/v2/init", (req, res) => {
-  const { username } = req.body
+router.get("/init", (req, res) => {
   const challenge = uuidv4()
   const userId = uuidv4()
+  database[userId] = {
+    challenge,
+    userId,
+  }
+  return res.json({ status: "ok", userId, challenge })
+})
+
+router.post("/register/v2/init", (req, res) => {
+  const { username } = req.body
 
   database[username] = {
     username: username,
