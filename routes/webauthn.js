@@ -7,8 +7,10 @@ const database = require("./db")
 const crypto = require("crypto")
 const { v4: uuidv4 } = require("uuid")
 
-const { parseAttestationObj } = require("../parser")
-const { hash, verify } = require("../utilsV2")
+const webAuthModule = require("../webAuthModule")
+const { parseAttestationObj } = webAuthModule.parser
+const { hash } = webAuthModule.utils
+const { verifySignature } = webAuthModule.verifier
 
 router.post("/register", (request, response) => {
   if (!request.body || !request.body.username || !request.body.name) {
@@ -247,7 +249,7 @@ router.post("/verify/v2", (req, res) => {
   const bufferedSignature = base64url.toBuffer(
     publicKeyCredential.response.signature
   )
-  const result = verify(
+  const result = verifySignature(
     signedData,
     bufferedSignature,
     attestationObject.authData.pemFormattedPublicKey
