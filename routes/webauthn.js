@@ -173,12 +173,12 @@ router.post("/register/v2", (req, res) => {
 router.post("/login/v2", (req, res) => {
   const { username, publicKeyCredential } = req.body
   const authrInfo = database[username].authrInfo
-  console.log(database[username])
-  console.log(authrInfo)
+  // console.log(database[username])
+  // console.log(authrInfo)
 
-  const attestation = parseAttestationObject(
-    base64url.toBuffer(authrInfo.response.attestationObject)
-  )
+  // const attestation = parseAttestationObject(
+  //   base64url.toBuffer(authrInfo.response.attestationObject)
+  // )
   const authenticator = parseAuthenticatorData(
     base64url.toBuffer(publicKeyCredential.response.authenticatorData)
   )
@@ -191,11 +191,9 @@ router.post("/login/v2", (req, res) => {
   const result = crypto
     .createVerify("SHA256")
     .update(data)
-    .verify(
-      attestation.authData.attestedCredentialData.credentialPublicKey,
-      base64.toBuffer(publicKeyCredential.response.signature)
-    )
+    .verify(authrInfo, publicKeyCredential.response.signature)
 
+  console.log("AAAAAAA", result)
   res.json({ status: "ok", result })
 })
 
