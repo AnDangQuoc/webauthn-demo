@@ -170,7 +170,47 @@ router.post("/register/v2", (req, res) => {
   res.json({ status: "ok" })
 })
 
+router.post("/register/v2/init", (req, res) => {
+  const { username } = req.body
+  const challenge = new Uint8Array(32)
+  const userId = new Uint8Array(32)
+  crypto.getRandomValues(challenge)
+  crypto.getRandomValues(userId)
+
+  const encodedUserId = base64url.encode(userId)
+  const encodedChallenge = base64url.encode(challenge)
+  database[username] = {
+    username: username,
+    userId: encodedUserId,
+    challenge: encodedChallenge,
+  }
+
+  return res.json({
+    status: "ok",
+    userId: encodedUserId,
+    challenge: encodedChallenge,
+  })
+})
+
 router.post("/login/v2", (req, res) => {
+  const { username } = req.body
+  if (!database[username]) {
+    return res.json({ status: "error", message: "user not registered" })
+  }
+  const authenticateInfo = database[username].authenticateInfo
+  const challenge = database[username].challenge
+  if (!authenticateInfo || !challenge) {
+    return res.json({ status: "error", message: "user data corrupted" })
+  }
+
+  return res.json({
+    status: "ok",
+    rawId: authenticateInfo.rawId,
+    challenge: challenge,
+  })
+})
+
+router.post("/verify/v2", (request, response) => {
   const { username, publicKeyCredential } = req.body
   const authenticateInfo = database[username].authenticateInfo
 
@@ -206,69 +246,6 @@ router.post("/login/v2", (req, res) => {
   )
 
   res.json({ status: "ok", result })
-})
-
-router.post("/verify/v2", (request, response) => {
-  let { username, webauthnResp } = request.body
-  let clientData = JSON.parse(
-    base64url.decode(webauthnResp.response.clientDataJSON)
-  )
-  console.log(webauthnResp)
-
-  if (!database[username]) {
-    database[username] = {
-      authenticators: [],
-    }
-  }
-
-  /* Check challenge... */
-  // if (clientData.challenge !== request.session.challenge) {
-  //   response.json({
-  //     status: "failed",
-  //     message: "Challenges don't match!",
-  //   })
-  // }
-
-  /* ...and origin */
-  if (clientData.origin !== config.origin) {
-    response.json({
-      status: "failed",
-      message: "Origins don't match!",
-    })
-  }
-
-  let result
-  if (webauthnResp.response.attestationObject !== undefined) {
-    /* This is create cred */
-    result = utils.verifyAuthenticatorAttestationResponse(webauthnResp)
-
-    if (result.verified) {
-      database[username].authenticators.push(result.authrInfo)
-      database[username].registered = true
-    }
-  } else if (webauthnResp.response.authenticatorData !== undefined) {
-    /* This is get assertion */
-    result = utils.verifyAuthenticatorAssertionResponse(
-      webauthnResp,
-      database[username].authenticators
-    )
-  } else {
-    response.json({
-      status: "failed",
-      message: "Can not determine type of response!",
-    })
-  }
-  console.log(result)
-
-  if (result.verified) {
-    request.session.loggedIn = true
-    response.json({ status: "ok" })
-  } else {
-    response.json({
-      status: "failed",
-      message: "Can not authenticate signature!",
-    })
-  }
 })
 
 module.exports = router
