@@ -59,7 +59,7 @@ function parseAttestationObj(buffer) {
   // Parsing authData
   const parsedAuthData = parseAuthenticatorData(authData)
 
-  return { authData: parsedAuthData, fmt, attSmt }
+  return { authData: parsedAuthData, fmt, attStmt }
 }
 
 module.exports = {
