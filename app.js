@@ -28,7 +28,7 @@ app.use(
 app.use(cookieParser())
 
 /* ----- serve static ----- */
-app.use(express.static(path.join(__dirname, "static")))
+app.use(express.static(path.join(__dirname, "static/react")))
 
 app.use("/", defaultroutes)
 app.use("/password", passwordauth)

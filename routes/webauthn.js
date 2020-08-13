@@ -4,11 +4,11 @@ const config = require("../config.json")
 const base64url = require("base64url")
 const router = express.Router()
 const database = require("./db")
-const {
-  parseAttestationObject,
-  parseAuthenticatorData,
-} = require("./parser/output-parser")
 const crypto = require("crypto")
+
+const { parseAttestationObj } = require("../parser")
+const { hash, verify } = require("../utilsV2")
+
 router.post("/register", (request, response) => {
   if (!request.body || !request.body.username || !request.body.name) {
     response.json({
@@ -165,35 +165,50 @@ router.post("/register/v2", (req, res) => {
   const { username, name, publicKeyCredential } = req.body
   database[username] = {
     username: username,
-    authrInfo: publicKeyCredential,
+    authenticateInfo: publicKeyCredential,
   }
   res.json({ status: "ok" })
 })
 
 router.post("/login/v2", (req, res) => {
   const { username, publicKeyCredential } = req.body
-  const authrInfo = database[username].authrInfo
-  // console.log(database[username])
-  // console.log(authrInfo)
+  const authenticateInfo = database[username].authenticateInfo
 
-  // const attestation = parseAttestationObject(
-  //   base64url.toBuffer(authrInfo.response.attestationObject)
-  // )
-  const authenticator = parseAuthenticatorData(
-    base64url.toBuffer(publicKeyCredential.response.authenticatorData)
+  // Parse Attestation Object
+  const bufferedAttestation = base64url.toBuffer(
+    authenticateInfo.response.attestationObject
+  )
+  const attestationObject = parseAttestationObj(bufferedAttestation)
+
+  database[username].assertInfo = publicKeyCredential
+  database[username].parsedAttestation = attestationObject
+
+  const bufferedAuthenticator = base64url.toBuffer(
+    publicKeyCredential.response.authenticatorData
   )
 
-  const data = Buffer.concat([
-    base64url.toBuffer(publicKeyCredential.response.authenticatorData),
-    utils.hash(base64url.toBuffer(publicKeyCredential.response.clientDataJSON)),
-  ])
+  const hashedClientJSON = hash(
+    base64url.toBuffer(publicKeyCredential.response.clientDataJSON)
+  )
 
-  const result = crypto
-    .createVerify("SHA256")
-    .update(data)
-    .verify(authrInfo, publicKeyCredential.response.signature)
+  const signedData = Buffer.concat([bufferedAuthenticator, hashedClientJSON])
 
+  const bufferedSignature = base64url.toBuffer(
+    publicKeyCredential.response.signature
+  )
+  const result = verify(
+    signedData,
+    bufferedSignature,
+    attestationObject.authData.pemFormattedPublicKey
+  )
   console.log("AAAAAAA", result)
+
+  const resultUsingBuffer = verify(
+    signedData,
+    bufferedSignature,
+    attestationObject.authData.credentialPublicKey
+  )
+  console.log("BBBBBBB", resultUsingBuffer)
   res.json({ status: "ok", result })
 })
 
