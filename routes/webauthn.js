@@ -163,14 +163,7 @@ router.get("/db", (req, res) => {
 })
 
 router.post("/register/v2", (req, res) => {
-  const {
-    username,
-    name,
-    userId,
-    publicKeyCredential,
-    userId,
-    challenge,
-  } = req.body
+  const { username, name, userId, publicKeyCredential, challenge } = req.body
 
   if (!database[username]) {
     database[username] = { username, name }
