@@ -2,6 +2,12 @@ const cbor = require("cbor")
 const base64url = require("base64url")
 const coseToJwk = require("cose-to-jwk")
 const jwkToPem = require("jwk-to-pem")
+const asn1js = require("asn1js")
+const pkijs = require("pkijs")
+
+const Certificate = pkijs.Certificate
+
+const { prettyStringify, oids } = require("./utils")
 
 function parseClientData(buffer) {
   // Decode Buffer to utf-8
@@ -59,10 +65,52 @@ function parseAttestationObj(buffer) {
   // Parsing authData
   const parsedAuthData = parseAuthenticatorData(authData)
 
-  return { authData: parsedAuthData, fmt, attStmt }
+  // Parsing cert if have
+  if (attStmt.x5c) {
+    const pasredAttestationCertificate = parseAttestaionCertificate(attStmt.x5c)
+    attStmt.parsedCert = pasredAttestationCertificate
+  }
+
+  return {
+    authData: parsedAuthData,
+    fmt,
+    attStmt,
+  }
 }
 
-// Parse data to base 64 to send to server 
+function parseAttestaionCertificate(bufferArray) {
+  const info = []
+  for (const x5c of bufferArray) {
+    const buffer = x5c.buffer.slice(
+      x5c.byteOffset,
+      x5c.byteOffset + x5c.byteLength
+    )
+    const parsed = asn1js.fromBER(buffer)
+    const cert = new Certificate({ schema: parsed.result })
+    const slice = {
+      version: cert.version,
+      serialNumber: Buffer.from(cert.serialNumber.valueBlock.valueHex).toString(
+        "hex"
+      ),
+      signature: {
+        algorithmId: oids[cert.signature.algorithmId],
+        value: Buffer.from(cert.signatureValue.valueBlock.valueHex).toString(
+          "hex"
+        ),
+      },
+      issuer: cert.issuer.typesAndValues[0].value.valueBlock.value,
+      notBefore: cert.notBefore.value,
+      notAfter: cert.notAfter.value,
+      subject: cert.subject.typesAndValues.map((v) => v.value.valueBlock.value),
+      subjectPublicKeyInfo: cert.subjectPublicKeyInfo,
+    }
+    info.push(slice)
+  }
+
+  return info
+}
+
+// Parse data to base 64 to send to server
 function publicKeyCredentialToJSON(pubKeyCred) {
   if (pubKeyCred instanceof Array) {
     let arr = []
@@ -86,7 +134,10 @@ function publicKeyCredentialToJSON(pubKeyCred) {
   }
 
   return pubKeyCred
+}
 
 module.exports = {
   parseAttestationObj,
+  parseClientData,
+  parseAttestaionCertificate,
 }
