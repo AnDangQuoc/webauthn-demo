@@ -204,7 +204,7 @@ router.post("/login/v2", (req, res) => {
   })
 })
 
-router.post("/verify/v2", (request, response) => {
+router.post("/verify/v2", (req, res) => {
   const { username, publicKeyCredential } = req.body
   const authenticateInfo = database[username].authenticateInfo
 
