@@ -163,11 +163,21 @@ router.get("/db", (req, res) => {
 })
 
 router.post("/register/v2", (req, res) => {
-  const { username, name, publicKeyCredential } = req.body
+  const {
+    username,
+    name,
+    userId,
+    publicKeyCredential,
+    userId,
+    challenge,
+  } = req.body
+
   if (!database[username]) {
     database[username] = { username, name }
   }
   database[username].authenticateInfo = publicKeyCredential
+  database[username].userId = userId
+  database[username].challenge = challenge
   res.json({ status: "ok" })
 })
 
